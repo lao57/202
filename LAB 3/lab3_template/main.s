@@ -28,6 +28,8 @@
 __main      PROC
       
 ;;;;;;; INITIALIZATION ;;;;;;;;;;
+
+		;ENABLES CLOCKS C AND B
 _Cnfig LDR r0,=RCC_BASE; The base address of the reset and clock control
        LDR r1,[r0,#RCC_AHB2ENR];  stores base address of clock control to Reg 1
          ORR r1,#0x00000006; This is masking to enable clock B(out) and C(in)
@@ -52,18 +54,18 @@ _Cnfig LDR r0,=RCC_BASE; The base address of the reset and clock control
 
         
 __CONT
-         MOV r6, #12; going to use this to get the second two bits of our number so I can map to pins 6 and 7
-         MOV r7, #3; going to use this to get the first two numbers of our count into pins so I can map to pins 2 and 3
-
         
 ;;;;;;; LOGIC ;;;;;;;;;;
             MOV r4, #0;sets reg4 to 0
-loop    ;map the output pins
+			
+			
+			
+		;FIRST PART OF THE LOOP
+loop    ;MAP THE CURRENT SAVED COUNT TO THE PINS
             MOV r6,#12; setting back to ...0001100
             MOV r7, #3; setting bacck to ...0000011
             AND r6, r4; setting r6 to the 2 MSB of our count
             AND r7, r4; setting r7 to our 2 LSB of our count
-            ;LDR r10,[r0,#GPIO_ODR]; setting regiseter 3 to effect the output pins as r0 contains GPIOB
             MOV r10, #0; clearing r10
             ORR r10, r6, LSL #4; setting pin 6 and 7 to the values of the 2 MSB of our count which is currently contained in r6 in bits 2 and 3
             ORR r10, r7, LSL #2; setting pin 2 and 3 to the values of the 2 LSB of out count which is currently contained in r7 in bits 0 and 1
@@ -71,8 +73,11 @@ loop    ;map the output pins
             
             
             
-            B wait;wait one sec
+            B wait;SENDS TO WAIT FUNCTION
             
+			
+		;SECOND PART OF THE LOOP
+		;CHECKS IF BUTTON IS PRESSED OR NUMBER IS 9 OTHERWISE ITERATES AS USUAL
 waitnd      LDR r8, [r5, #GPIO_IDR]; setting r8 to be the value of IDR in GPIOC which contains the button
             AND r8, #0x2000;#1, LSL #13; anding with the the 13th bit which if button is not pressed  will contain a 1
             CMP r8, #0; checks this bit to see if button is pressed and register 8 is not equal to 0 if button is being pressed
@@ -82,11 +87,11 @@ waitnd      LDR r8, [r5, #GPIO_IDR]; setting r8 to be the value of IDR in GPIOC 
             BLT elsif
             BAL loop    ; go back to the top
 
-;;;;;;; Your Code Goes Here ;;;;;;;;;;
+		;THIS IS THE R4++ FUNCTION
 elsif   ADD r4, #1; incriments by one
             BAL loop    ; go back to the top
             
-;;;;;;; wait function ;;;;;;;;;;
+		;THIS IS THE WAIT FUNCTION
 wait  MOV r9, #0x000F0000; creating a big number
 wait1        SUB r9, #1; subtracting 1
             CMP r9, #0; compare to zero
